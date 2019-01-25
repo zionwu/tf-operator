@@ -143,6 +143,10 @@ func (tc *TFController) createNewPod(tfjob *tfv1alpha2.TFJob, rt, index string, 
 		podTemplate.Labels[key] = value
 	}
 
+	if tc.Config.EnableGangScheduling {
+		podTemplate.Spec.SchedulerName = gangSchdulerName
+	}
+
 	if err := setClusterSpec(podTemplate, tfjob, rt, index); err != nil {
 		return err
 	}
