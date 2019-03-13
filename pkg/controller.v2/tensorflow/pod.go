@@ -20,8 +20,9 @@ import (
 	"strconv"
 	"strings"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 
 	tfv1alpha2 "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1alpha2"
@@ -39,6 +40,8 @@ const (
 	podTemplateRestartPolicyReason = "SettedPodTemplateRestartPolicy"
 	// exitedWithCodeReason is the normal reason when the pod is exited because of the exit code.
 	exitedWithCodeReason = "ExitedWithCode"
+	// nodeLostReason is the reason .
+	nodeLostReason = "NodeLost"
 )
 
 // reconcilePods checks and updates pods for each given TFReplicaSpec.
@@ -98,6 +101,14 @@ func (tc *TFController) reconcilePods(
 				}
 			}
 
+			if pod.Status.Reason == nodeLostReason {
+				logger.Infof("Need to delete pod on lost node: %s-%d", rt, index)
+				err = tc.deletePodNow(pod)
+				if err != nil {
+					return err
+				}
+			}
+
 			// Check whether worker 0 is exited without error.
 			if rtype == tfv1alpha2.TFReplicaTypeWorker && index == 0 && exitCode == 0 {
 				worker0Completed = true
@@ -107,6 +118,11 @@ func (tc *TFController) reconcilePods(
 	}
 
 	return updateStatusSingle(tfjob, rtype, replicas, restart, worker0Completed)
+}
+
+func (tc *TFController) deletePodNow(pod *v1.Pod) error {
+	now := int64(0)
+	return tc.KubeClientSet.CoreV1().Pods(pod.Namespace).Delete(pod.Name, &metav1.DeleteOptions{GracePeriodSeconds: &now})
 }
 
 // createNewPod creates a new pod for the given index and type.
