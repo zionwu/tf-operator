@@ -20,7 +20,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -294,6 +294,11 @@ func (tc *TFController) syncTFJob(key string) (bool, error) {
 	}
 
 	tfjob := sharedTFJob.DeepCopy()
+	if isCleaned(tfjob.Status) {
+		logger.Infof("TFJob has been cleaned up: %v", key)
+		return true, nil
+	}
+
 	tfjobNeedsSync := tc.satisfiedExpectations(tfjob)
 
 	if tc.Config.EnableGangScheduling {
@@ -373,6 +378,11 @@ func (tc *TFController) reconcileTFJobs(tfjob *tfv1alpha2.TFJob) error {
 		initializeTFReplicaStatuses(tfjob, tfv1alpha2.TFReplicaTypePS)
 		initializeTFReplicaStatuses(tfjob, tfv1alpha2.TFReplicaTypeChief)
 		initializeTFReplicaStatuses(tfjob, tfv1alpha2.TFReplicaTypeMaster)
+
+		msg := fmt.Sprintf("TFJob %s is failed.", tfjob.Name)
+		if err := updateTFJobConditions(tfjob, tfv1alpha2.TFJobCleaned, tfJobCleanedReason, msg); err != nil {
+			return err
+		}
 		return tc.updateStatusHandler(tfjob)
 	}
 

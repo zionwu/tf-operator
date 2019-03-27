@@ -18,7 +18,7 @@ package tensorflow
 import (
 	"fmt"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	tfv1alpha2 "github.com/kubeflow/tf-operator/pkg/apis/tensorflow/v1alpha2"
@@ -36,6 +36,8 @@ const (
 	tfJobFailedReason = "TFJobFailed"
 	// tfJobRestarting is added in a tfjob when it is restarting.
 	tfJobRestartingReason = "TFJobRestarting"
+
+	tfJobCleanedReason = "TFJobCleaned"
 )
 
 // updateStatus updates the status of the tfjob.
@@ -199,12 +201,16 @@ func isFailed(status tfv1alpha2.TFJobStatus) bool {
 	return hasCondition(status, tfv1alpha2.TFJobFailed)
 }
 
+func isCleaned(status tfv1alpha2.TFJobStatus) bool {
+	return hasCondition(status, tfv1alpha2.TFJobCleaned)
+}
+
 // setCondition updates the tfjob to include the provided condition.
 // If the condition that we are about to add already exists
 // and has the same status and reason then we are not going to update.
 func setCondition(status *tfv1alpha2.TFJobStatus, condition tfv1alpha2.TFJobCondition) {
 	// Do nothing if TFJobStatus have failed condition
-	if isFailed(*status) {
+	if isFailed(*status) && condition.Type != tfv1alpha2.TFJobCleaned {
 		return
 	}
 

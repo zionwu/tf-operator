@@ -20,7 +20,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeinformers "k8s.io/client-go/informers"
 	kubeclientset "k8s.io/client-go/kubernetes"
@@ -49,7 +49,7 @@ var (
 	leaseDuration = 15 * time.Second
 	renewDuration = 5 * time.Second
 	retryPeriod   = 3 * time.Second
-	resyncPeriod  = 30 * time.Second
+	//resyncPeriod  = 30 * time.Second
 )
 
 const RecommendedKubeConfigPathEnv = "KUBECONFIG"
@@ -97,6 +97,7 @@ func Run(opt *options.ServerOption) error {
 	}
 
 	// Create informer factory.
+	resyncPeriod := time.Duration(opt.ResyncPeriod) * time.Second
 	kubeInformerFactory := kubeinformers.NewFilteredSharedInformerFactory(kubeClientSet, resyncPeriod, opt.Namespace, nil)
 	tfJobInformerFactory := tfjobinformers.NewSharedInformerFactory(tfJobClientSet, resyncPeriod)
 

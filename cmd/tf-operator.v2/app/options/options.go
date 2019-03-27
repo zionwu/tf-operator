@@ -29,6 +29,7 @@ type ServerOption struct {
 	JSONLogFormat        bool
 	EnableGangScheduling bool
 	Namespace            string
+	ResyncPeriod         int
 }
 
 // NewServerOption creates a new CMServer with a default config.
@@ -50,6 +51,9 @@ func (s *ServerOption) AddFlags(fs *flag.FlagSet) {
 	fs.IntVar(&s.Threadiness, "threadiness", 1,
 		`How many threads to process the main logic`)
 
+	fs.IntVar(&s.ResyncPeriod, "resync-period", 30,
+		`The time(in second) for the controller to resync`)
+		
 	fs.BoolVar(&s.PrintVersion, "version", false, "Show version and quit")
 
 	fs.BoolVar(&s.JSONLogFormat, "json-log-format", true,

@@ -15,7 +15,7 @@
 package v1alpha2
 
 import (
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -217,6 +217,8 @@ const (
 	// reached phase failed with no restarting.
 	// The training has failed its execution.
 	TFJobFailed TFJobConditionType = "Failed"
+
+	TFJobCleaned TFJobConditionType = "Cleaned"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
